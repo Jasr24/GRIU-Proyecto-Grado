@@ -1253,3 +1253,187 @@ th {
     padding: 10px 14px;
   }
 }
+.create-report-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.citizen-breadcrumb {
+  color: #708691;
+  font-size: 0.7rem;
+  margin-bottom: 18px;
+}
+.create-report-heading {
+  margin-bottom: 16px;
+}
+.report-steps {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #e5f4f1;
+  border-radius: 7px;
+  padding: 15px 18px;
+  color: #526e7b;
+  font-size: 0.7rem;
+  margin-bottom: 22px;
+}
+.report-steps strong {
+  color: #087a78;
+}
+.create-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(230px, 0.9fr);
+  gap: 20px;
+  align-items: start;
+}
+.create-report-form {
+  background: #fff;
+  border: 1px solid #dce8eb;
+  border-radius: 9px;
+  padding: 20px;
+  max-width: none;
+}
+.report-section {
+  display: grid;
+  gap: 12px;
+}
+.report-section + .report-section {
+  margin-top: 22px;
+}
+.report-section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 2px;
+}
+.report-section h2 span {
+  margin-right: 10px;
+}
+.field-hint {
+  color: #708691;
+  font-size: 0.62rem;
+  margin-top: -8px;
+}
+.location-preview {
+  display: grid;
+  gap: 7px;
+  background: #e5f4f1;
+  border-radius: 7px;
+  padding: 15px 16px;
+}
+.location-preview p {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #087a78;
+  margin: 0;
+}
+.location-preview strong {
+  font-size: 0.82rem;
+}
+.location-preview span {
+  font-size: 0.65rem;
+  color: #708691;
+}
+.photo-placeholder {
+  margin-top: 22px !important;
+}
+.photo-disabled {
+  display: grid;
+  gap: 7px;
+  border: 1px solid #dce8eb;
+  background: #f4f8fa;
+  border-radius: 7px;
+  padding: 17px;
+  color: #526e7b;
+}
+.photo-disabled strong {
+  color: #087a78;
+  font-size: 0.75rem;
+}
+.photo-disabled span,
+.photo-disabled small {
+  font-size: 0.65rem;
+}
+.confirmation {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  margin-top: 20px;
+  color: #526e7b;
+  font-size: 0.65rem !important;
+  font-weight: 500 !important;
+}
+.confirmation input {
+  width: auto;
+}
+.report-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+.report-actions .submit-button {
+  margin: 0;
+}
+.cancel-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d4e0e4;
+  border-radius: 8px;
+  color: #173451;
+  text-decoration: none;
+  padding: 12px 30px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.before-send {
+  background: #fff;
+  border: 1px solid #dce8eb;
+  border-radius: 9px;
+  padding: 20px;
+}
+.before-send h2 {
+  font-size: 1rem;
+  margin: 0 0 14px;
+}
+.before-send ul {
+  padding-left: 18px;
+  margin: 0;
+  display: grid;
+  gap: 15px;
+  color: #526e7b;
+  font-size: 0.72rem;
+}
+.emergency-note {
+  display: grid;
+  gap: 8px;
+  background: #fff1d8;
+  padding: 15px;
+  margin: 20px 0;
+  color: #98651a;
+  font-size: 0.68rem;
+}
+.before-send > small {
+  color: #708691;
+  font-size: 0.6rem;
+}
+@media (max-width: 800px) {
+  .create-report-grid {
+    grid-template-columns: 1fr;
+  }
+  .before-send {
+    order: -1;
+  }
+  .report-steps {
+    gap: 10px;
+    font-size: 0.62rem;
+  }
+  .create-report-form {
+    padding: 16px;
+  }
+}
+.location-preview span {
+  font-size: 0.72rem;
+  color: #173451;
+}
+.location-preview small {
+  font-size: 0.65rem;
+  color: #708691;
+}
