@@ -390,6 +390,15 @@ th {
   font-size: 0.58rem;
   margin-top: 5px;
 }
+.admin-login {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.demo-login {
+  display: block;
+  padding-left: 0;
+}
 @media (max-width: 800px) {
   .auth-nav {
     padding: 0 24px;
