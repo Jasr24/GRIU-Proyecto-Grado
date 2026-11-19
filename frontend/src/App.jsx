@@ -114,7 +114,7 @@ function AppContent() {
         }
       />
       <Route
-        path="/ciudadano"
+        path="/ciudadano/*"
         element={
           role === "admin" ? (
             <Navigate to="/admin" replace />

@@ -1,12 +1,96 @@
-import React, { useEffect, useState } from 'react';
-import Dashboard from './Dashboard';
-import { api } from '../services/api';
+import React from "react";
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  NavLink,
+  useLocation,
+} from "react-router-dom";
+import { useEffect, useState } from "react";
+import CitizenHome from "./CitizenHome";
+import CreateReport from "./CreateReport";
+import MyReports from "./MyReports";
+import ReportTracking from "./ReportTracking";
+import { api } from "../services/api";
 
 export default function Citizen({ session, onLogout }) {
-  const [categories, setCategories] = useState([]); const [reports, setReports] = useState([]); const [message, setMessage] = useState('');
-  const [form, setForm] = useState({ category_id: '', title: '', description: '', barrio: '', commune: '', address: '' });
-  const load = async () => { setCategories(await api('/api/categories', {}, session)); setReports(await api('/api/reports', {}, session)); };
-  useEffect(() => { load().catch(e => setMessage(e.message)); }, []);
-  const submit = async e => { e.preventDefault(); try { const report = await api('/api/reports', { method: 'POST', body: JSON.stringify(form) }, session); setMessage(`Reporte creado: ${report.report_code}`); setForm({ category_id: '', title: '', description: '', barrio: '', commune: '', address: '' }); load(); } catch (error) { setMessage(error.message); } };
-  return <Dashboard title="Panel ciudadano" onLogout={onLogout}><div className="grid"><section className="panel"><h2>Crear reporte</h2><form onSubmit={submit} className="stack"><select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} required><option value="">Seleccione una categoría</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select><input placeholder="Título del incidente" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required /><textarea placeholder="Descripción" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required /><input placeholder="Barrio o comuna" value={form.barrio} onChange={e => setForm({ ...form, barrio: e.target.value })} required /><input placeholder="Dirección o referencia" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /><button>Enviar reporte</button></form>{message && <p className="message">{message}</p>}</section><section className="panel"><h2>Mis reportes</h2>{reports.length === 0 ? <p>Aún no tienes reportes.</p> : reports.map(r => <article className="report" key={r.id}><strong>{r.report_code}</strong><span>{r.title}</span><small>{r.incident_categories?.name} · {r.status}</small></article>)}</section></div></Dashboard>;
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api("/api/me", {}, session)
+      .then(({ profile: currentProfile }) => setProfile(currentProfile))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading)
+    return <div className="loading">Cargando tu espacio ciudadano...</div>;
+  return (
+    <Routes>
+      <Route element={<CitizenLayout profile={profile} onLogout={onLogout} />}>
+        <Route index element={<CitizenHome session={session} />} />
+        <Route
+          path="crear-reporte"
+          element={<CreateReport session={session} />}
+        />
+        <Route path="mis-reportes" element={<MyReports session={session} />} />
+        <Route
+          path="seguimiento/:id"
+          element={<ReportTracking session={session} />}
+        />
+        <Route path="*" element={<Navigate to="/ciudadano" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function CitizenLayout({ profile, onLogout }) {
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "ciudadano";
+  const location = useLocation();
+  const trackingOpen = location.pathname.startsWith("/ciudadano/seguimiento/");
+  const linkClass = ({ isActive }) =>
+    `sidebar-link${isActive ? " active" : ""}`;
+  return (
+    <main className="citizen-page">
+      <header className="citizen-header">
+        <strong>GRIU</strong>
+        <span>NEIVA, HUILA&nbsp; / &nbsp;PORTAL CIUDADANO</span>
+        <span className="citizen-user">{profile?.full_name || firstName}</span>
+      </header>
+      <div className="citizen-layout">
+        <aside className="citizen-sidebar">
+          <p className="sidebar-label">MI ESPACIO</p>
+          <NavLink className={linkClass} to="/ciudadano" end>
+            Inicio
+          </NavLink>
+          <NavLink className={linkClass} to="/ciudadano/crear-reporte">
+            Crear reporte
+          </NavLink>
+          <NavLink className={linkClass} to="/ciudadano/mis-reportes">
+            Mis reportes
+          </NavLink>
+          {trackingOpen ? (
+            <span className="sidebar-link active">Seguimiento</span>
+          ) : (
+            <span className="sidebar-link sidebar-disabled">Seguimiento</span>
+          )}
+          <div className="sidebar-help">
+            <strong>Tu voz mejora Neiva.</strong>
+            <span>
+              ¿Riesgo inmediato?
+              <br />
+              Llama al 123.
+            </span>
+          </div>
+          <button className="sidebar-logout" onClick={onLogout}>
+            Cerrar sesión →
+          </button>
+        </aside>
+        <section className="citizen-main">
+          <Outlet context={{ profile, firstName }} />
+        </section>
+      </div>
+    </main>
+  );
 }
