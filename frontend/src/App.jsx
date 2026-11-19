@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { api } from "./services/api";
 import Auth from "./components/Auth";
 import Citizen from "./components/Citizen";
 import Admin from "./components/Admin";
+import Landing from "./components/Landing";
 
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,15 +56,39 @@ export default function App() {
     await supabase.auth.signOut();
     setSession(null);
     setRole(null);
+    navigate("/");
   };
 
   const handleAuth = async (currentSession) => {
     setSession(currentSession);
     await loadRole(currentSession);
+    navigate("/");
   };
 
   if (loading) return <div className="loading">Cargando GRIU...</div>;
-  if (!session) return <Auth onAuth={handleAuth} />;
+  if (!session)
+    return (
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Landing
+              onLogin={() => navigate("/login")}
+              onRegister={() => navigate("/registro")}
+            />
+          }
+        />
+        <Route
+          path="/login"
+          element={<Auth initialMode="login" onAuth={handleAuth} />}
+        />
+        <Route
+          path="/registro"
+          element={<Auth initialMode="register" onAuth={handleAuth} />}
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   if (roleLoading)
     return <div className="loading">Verificando permisos...</div>;
   if (roleError)
@@ -67,9 +100,43 @@ export default function App() {
         </div>
       </div>
     );
-  return role === "admin" ? (
-    <Admin session={session} onLogout={logout} />
-  ) : (
-    <Citizen session={session} onLogout={logout} />
+
+  return (
+    <Routes>
+      <Route
+        path="/admin"
+        element={
+          role === "admin" ? (
+            <Admin session={session} onLogout={logout} />
+          ) : (
+            <Navigate to="/ciudadano" replace />
+          )
+        }
+      />
+      <Route
+        path="/ciudadano"
+        element={
+          role === "admin" ? (
+            <Navigate to="/admin" replace />
+          ) : (
+            <Citizen session={session} onLogout={logout} />
+          )
+        }
+      />
+      <Route
+        path="*"
+        element={
+          <Navigate to={role === "admin" ? "/admin" : "/ciudadano"} replace />
+        }
+      />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }

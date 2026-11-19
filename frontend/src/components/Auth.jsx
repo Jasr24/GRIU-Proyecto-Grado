@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 function friendlyAuthError(error) {
@@ -19,8 +20,9 @@ function friendlyAuthError(error) {
   return "No fue posible completar la solicitud. Intenta nuevamente.";
 }
 
-export default function Auth({ onAuth }) {
-  const [mode, setMode] = useState("register");
+export default function Auth({ onAuth, initialMode = "register" }) {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState(initialMode);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -36,6 +38,7 @@ export default function Auth({ onAuth }) {
   const register = mode === "register";
   const update = (name, value) =>
     setForm((current) => ({ ...current, [name]: value }));
+  useEffect(() => setMode(initialMode), [initialMode]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -102,10 +105,22 @@ export default function Auth({ onAuth }) {
           </div>
           <span className="nav-tag">Una ciudad que escucha</span>
           <div className="nav-actions">
-            <button className="outline-button" onClick={() => setMode("login")}>
+            <button
+              className="outline-button"
+              onClick={() => {
+                setMode("login");
+                navigate("/login");
+              }}
+            >
               Iniciar sesión
             </button>
-            <button className="nav-primary" onClick={() => setMode("register")}>
+            <button
+              className="nav-primary"
+              onClick={() => {
+                setMode("register");
+                navigate("/registro");
+              }}
+            >
               Registrarse
             </button>
           </div>
