@@ -287,6 +287,10 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Error interno del servidor" });
 });
 
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.listen(port, "0.0.0.0", () =>
   console.log(`GRIU backend activo en http://localhost:${port}`),
 );
