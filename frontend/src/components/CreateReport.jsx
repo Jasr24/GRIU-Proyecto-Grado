@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
+import { supabase } from "../lib/supabase";
 
 export default function CreateReport({ session }) {
   const navigate = useNavigate();
@@ -8,6 +9,8 @@ export default function CreateReport({ session }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
   const [form, setForm] = useState({
     category_id: "",
     title: "",
@@ -26,6 +29,25 @@ export default function CreateReport({ session }) {
   const updateField = (field) => (event) =>
     setForm({ ...form, [field]: event.target.value });
 
+  const selectFiles = (selected) => {
+    const valid = selected.filter((file) => {
+      const validType = ["image/jpeg", "image/png"].includes(file.type);
+      const validSize = file.size <= 10 * 1024 * 1024;
+      return validType && validSize;
+    });
+    if (selected.length !== valid.length)
+      setMessage("Solo se permiten imágenes JPG o PNG de máximo 10 MB.");
+    setFiles(valid.slice(0, 3));
+  };
+
+  const chooseFiles = (event) =>
+    selectFiles(Array.from(event.target.files || []));
+  const dropFiles = (event) => {
+    event.preventDefault();
+    setDragActive(false);
+    selectFiles(Array.from(event.dataTransfer.files || []));
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     if (!confirmed)
@@ -40,6 +62,24 @@ export default function CreateReport({ session }) {
         { method: "POST", body: JSON.stringify(form) },
         session,
       );
+      for (const file of files) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${session.user.id}/${report.id}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from("report-photos")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw uploadError;
+        const { error: attachmentError } = await supabase
+          .from("report_attachments")
+          .insert({
+            report_id: report.id,
+            uploaded_by: session.user.id,
+            storage_path: path,
+            file_name: file.name,
+            content_type: file.type,
+          });
+        if (attachmentError) throw attachmentError;
+      }
       navigate(`/ciudadano/seguimiento/${report.id}`);
     } catch (error) {
       setMessage(error.message);
@@ -154,19 +194,45 @@ export default function CreateReport({ session }) {
               <span>
                 {form.address || "Dirección o referencia por confirmar"}
               </span>
-              <small>Neiva, Huila.</small>
+              <small>Neiva, Huila</small>
             </div>
           </section>
           <section className="report-section photo-placeholder">
             <h2>
               <span>03</span> Evidencia fotográfica
             </h2>
-            <div className="photo-disabled">
-              <strong>Adjuntar fotografías</strong>
-              <span>
-                Esta función se habilitará en HU-04 · Adjuntar fotografía.
-              </span>
-              <small>Por ahora puedes enviar el reporte sin fotografías.</small>
+            <div
+              className={`photo-upload${dragActive ? " drag-active" : ""}`}
+              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={(event) => {
+                if (event.currentTarget === event.target) setDragActive(false);
+              }}
+              onDrop={dropFiles}
+            >
+              <label className="photo-picker">
+                ↑ Selecciona una o varias fotografías
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  multiple
+                  onChange={chooseFiles}
+                />
+              </label>
+              <span className="drop-hint">o arrástralas aquí</span>
+              <small>
+                JPG o PNG · Máximo 10 MB por imagen · Hasta 3 imágenes
+              </small>
+              {files.length > 0 && (
+                <div className="selected-files">
+                  {files.map((file) => (
+                    <span key={`${file.name}-${file.size}`}>✓ {file.name}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
           <label className="confirmation">

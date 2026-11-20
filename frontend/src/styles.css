@@ -1437,3 +1437,74 @@ th {
   font-size: 0.65rem;
   color: #708691;
 }
+.photo-upload {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #dce8eb;
+  background: #f4f8fa;
+  border-radius: 7px;
+  padding: 16px;
+  color: #526e7b;
+}
+.photo-picker {
+  display: inline-flex !important;
+  width: max-content;
+  cursor: pointer;
+  color: #087a78;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+}
+.photo-picker input {
+  display: none;
+}
+.photo-upload > small {
+  font-size: 0.65rem;
+}
+.selected-files {
+  display: grid;
+  gap: 6px;
+  background: #fff;
+  padding: 10px;
+  font-size: 0.68rem;
+  color: #087a78;
+}
+.tracking-attachments {
+  margin-top: 8px;
+}
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.attachment-grid a {
+  display: grid;
+  gap: 6px;
+  color: #173451;
+  text-decoration: none;
+  font-size: 0.68rem;
+}
+.attachment-grid img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 7px;
+  border: 1px solid #dce8eb;
+}
+@media (max-width: 800px) {
+  .attachment-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.photo-upload {
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.photo-upload.drag-active {
+  border: 2px dashed #087a78;
+  background: #e5f4f1;
+}
+.drop-hint {
+  font-size: 0.68rem;
+  color: #708691;
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../services/api";
+import { supabase } from "../lib/supabase";
 
 const labels = {
   submitted: "Recibido",
@@ -15,11 +16,33 @@ export default function ReportTracking({ session }) {
   const { id } = useParams();
   const [report, setReport] = useState(null);
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState([]);
   useEffect(() => {
-    api(`/api/reports/${id}`, {}, session)
-      .then(setReport)
-      .catch((e) => setMessage(e.message));
-  }, [id]);
+    async function loadReport() {
+      try {
+        const currentReport = await api(`/api/reports/${id}`, {}, session);
+        setReport(currentReport);
+        const { data, error } = await supabase
+          .from("report_attachments")
+          .select("id,file_name,storage_path,content_type,created_at")
+          .eq("report_id", id)
+          .order("created_at");
+        if (error) throw error;
+        const withUrls = await Promise.all(
+          (data || []).map(async (attachment) => {
+            const { data: signed } = await supabase.storage
+              .from("report-photos")
+              .createSignedUrl(attachment.storage_path, 3600);
+            return { ...attachment, signedUrl: signed?.signedUrl };
+          }),
+        );
+        setAttachments(withUrls);
+      } catch (error) {
+        setMessage(error.message);
+      }
+    }
+    loadReport();
+  }, [id, session]);
   if (message)
     return (
       <section className="page-panel">
@@ -63,6 +86,24 @@ export default function ReportTracking({ session }) {
           </span>
         </div>
       </div>
+      {attachments.length > 0 && (
+        <section className="tracking-attachments">
+          <h2 className="timeline-title">Evidencia fotográfica</h2>
+          <div className="attachment-grid">
+            {attachments.map((attachment) => (
+              <a
+                key={attachment.id}
+                href={attachment.signedUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img src={attachment.signedUrl} alt={attachment.file_name} />
+                <span>{attachment.file_name}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
       <h2 className="timeline-title">Historial de cambios</h2>
       <div className="timeline">
         {(report.updates || []).length === 0 ? (
