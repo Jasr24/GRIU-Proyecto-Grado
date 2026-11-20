@@ -2390,3 +2390,6 @@ th {
   pointer-events: none;
   cursor: default;
 }
+.admin-nav:not(.active) {
+  cursor: pointer;
+}

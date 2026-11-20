@@ -11,6 +11,7 @@ import { api } from "./services/api";
 import Auth from "./components/Auth";
 import Citizen from "./components/Citizen";
 import Admin from "./components/Admin";
+import AdminReports from "./components/AdminReports";
 import Landing from "./components/Landing";
 import PublicTracking from "./components/PublicTracking";
 
@@ -113,6 +114,16 @@ function AppContent() {
         element={
           role === "admin" ? (
             <Admin session={session} onLogout={logout} />
+          ) : (
+            <Navigate to="/ciudadano" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/reportes"
+        element={
+          role === "admin" ? (
+            <AdminReports session={session} onLogout={logout} />
           ) : (
             <Navigate to="/ciudadano" replace />
           )

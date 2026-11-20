@@ -286,7 +286,10 @@ export default function Admin({ session, onLogout }) {
                       className="manage-button"
                       onClick={() => setSelected(report)}
                     >
-                      Gestionar →
+                      {["resolved", "rejected"].includes(report.status)
+                        ? "Ver"
+                        : "Gestionar"}{" "}
+                      →
                     </button>
                   </span>
                 </div>
