@@ -77,8 +77,12 @@ export default function PublicTracking() {
         <div className="loading">Consultando reporte...</div>
       </main>
     );
-  const currentRank = rank[report.status] || 1;
   const latest = report.updates?.[report.updates.length - 1];
+  const responsible = ["assigned", "in_progress", "resolved"].includes(
+    report.status,
+  )
+    ? "Asignación registrada"
+    : "Pendiente de asignación";
   return (
     <main className="public-tracking-page">
       <PublicHeader />
@@ -111,31 +115,7 @@ export default function PublicTracking() {
                   : ""}
               </p>
             </div>
-            <div className="stage-list">
-              {stages.map((stage, index) => {
-                const done = currentRank >= rank[stage.status];
-                const update = report.updates?.find(
-                  (item) => item.new_status === stage.status,
-                );
-                return (
-                  <article
-                    key={stage.status}
-                    className={done ? "stage-card stage-done" : "stage-card"}
-                  >
-                    <b>{String(index + 1).padStart(2, "0")}</b>
-                    <div>
-                      <strong>{stage.title}</strong>
-                      <small>
-                        {update
-                          ? new Date(update.created_at).toLocaleString("es-CO")
-                          : "Pendiente"}
-                      </small>
-                      <span>{update?.note || stage.note}</span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            <StageList report={report} />
           </div>
           <aside className="tracking-side-card">
             <h2>Datos del reporte</h2>
@@ -161,12 +141,10 @@ export default function PublicTracking() {
               </div>
               <div>
                 <dt>Área responsable</dt>
-                <dd>Información pendiente de asignación</dd>
+                <dd>{responsible}</dd>
               </div>
             </dl>
-            <p>
-              Las novedades aparecerán aquí cuando el reporte sea actualizado.
-            </p>
+            <p>Las novedades se muestran en la trazabilidad del reporte.</p>
             <Link className="cancel-button" to="/">
               Volver al inicio
             </Link>
@@ -176,15 +154,15 @@ export default function PublicTracking() {
           <section className="tracking-evidence">
             <h2>Evidencia fotográfica</h2>
             <div className="attachment-grid">
-              {report.attachments.map((attachment) => (
+              {report.attachments.map((a) => (
                 <a
-                  key={attachment.id}
-                  href={attachment.signed_url}
+                  key={a.id}
+                  href={a.signed_url}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <img src={attachment.signed_url} alt={attachment.file_name} />
-                  <span>{attachment.file_name}</span>
+                  <img src={a.signed_url} alt={a.file_name} />
+                  <span>{a.file_name}</span>
                 </a>
               ))}
             </div>
@@ -207,6 +185,38 @@ export default function PublicTracking() {
   );
 }
 
+function StageList({ report }) {
+  const currentRank = rank[report.status] || 1;
+  return (
+    <div className="stage-list">
+      {stages.map((stage, index) => {
+        const done = currentRank >= rank[stage.status];
+        const update = report.updates?.find(
+          (item) =>
+            item.new_status === stage.status ||
+            (stage.status === "in_review" && item.new_status === "assigned"),
+        );
+        return (
+          <article
+            key={stage.status}
+            className={done ? "stage-card stage-done" : "stage-card"}
+          >
+            <b>{String(index + 1).padStart(2, "0")}</b>
+            <div>
+              <strong>{stage.title}</strong>
+              <small>
+                {update
+                  ? new Date(update.created_at).toLocaleString("es-CO")
+                  : "Pendiente"}
+              </small>
+              <span>{update?.note || stage.note}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
 function PublicHeader() {
   return (
     <header className="public-tracking-header">

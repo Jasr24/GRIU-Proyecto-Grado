@@ -47,9 +47,8 @@ export default function ReportTracking({ session }) {
   const [report, setReport] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [message, setMessage] = useState("");
-
   useEffect(() => {
-    async function loadReport() {
+    async function load() {
       try {
         const current = await api(`/api/reports/${id}`, {}, session);
         setReport(current);
@@ -60,11 +59,11 @@ export default function ReportTracking({ session }) {
           .order("created_at");
         if (error) throw error;
         const signed = await Promise.all(
-          (data || []).map(async (attachment) => {
+          (data || []).map(async (a) => {
             const { data: url } = await supabase.storage
               .from("report-photos")
-              .createSignedUrl(attachment.storage_path, 3600);
-            return { ...attachment, signedUrl: url?.signedUrl };
+              .createSignedUrl(a.storage_path, 3600);
+            return { ...a, signedUrl: url?.signedUrl };
           }),
         );
         setAttachments(signed);
@@ -72,9 +71,8 @@ export default function ReportTracking({ session }) {
         setMessage(error.message);
       }
     }
-    loadReport();
+    load();
   }, [id, session]);
-
   if (message)
     return (
       <section className="page-panel">
@@ -85,9 +83,12 @@ export default function ReportTracking({ session }) {
       </section>
     );
   if (!report) return <div className="loading">Cargando seguimiento...</div>;
-  const currentRank = rank[report.status] || 1;
   const latest = report.updates?.[report.updates.length - 1];
-
+  const responsible =
+    report.assigned_to ||
+    ["assigned", "in_progress", "resolved"].includes(report.status)
+      ? "Asignación registrada"
+      : "Pendiente de asignación";
   return (
     <section className="tracking-page">
       <div className="citizen-breadcrumb">
@@ -118,31 +119,7 @@ export default function ReportTracking({ session }) {
                 : ""}
             </p>
           </div>
-          <div className="stage-list">
-            {stages.map((stage, index) => {
-              const done = currentRank >= rank[stage.status];
-              const update = report.updates?.find(
-                (item) => item.new_status === stage.status,
-              );
-              return (
-                <article
-                  key={stage.status}
-                  className={done ? "stage-card stage-done" : "stage-card"}
-                >
-                  <b>{String(index + 1).padStart(2, "0")}</b>
-                  <div>
-                    <strong>{stage.title}</strong>
-                    <small>
-                      {update
-                        ? new Date(update.created_at).toLocaleString("es-CO")
-                        : "Pendiente"}
-                    </small>
-                    <span>{update?.note || stage.note}</span>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          <StageList report={report} />
         </div>
         <aside className="tracking-side-card">
           <h2>Datos del reporte</h2>
@@ -172,12 +149,10 @@ export default function ReportTracking({ session }) {
             </div>
             <div>
               <dt>Área responsable</dt>
-              <dd>
-                {report.assigned_to ? "Asignada" : "Pendiente de asignación"}
-              </dd>
+              <dd>{responsible}</dd>
             </div>
           </dl>
-          <p>Las novedades aparecerán aquí y se enviarán a tu correo.</p>
+          <p>Las novedades se muestran en la trazabilidad del reporte.</p>
           <Link className="cancel-button" to="/ciudadano/mis-reportes">
             Ver mis reportes
           </Link>
@@ -187,15 +162,10 @@ export default function ReportTracking({ session }) {
         <section className="tracking-evidence">
           <h2>Evidencia fotográfica</h2>
           <div className="attachment-grid">
-            {attachments.map((attachment) => (
-              <a
-                key={attachment.id}
-                href={attachment.signedUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img src={attachment.signedUrl} alt={attachment.file_name} />
-                <span>{attachment.file_name}</span>
+            {attachments.map((a) => (
+              <a key={a.id} href={a.signedUrl} target="_blank" rel="noreferrer">
+                <img src={a.signedUrl} alt={a.file_name} />
+                <span>{a.file_name}</span>
               </a>
             ))}
           </div>
@@ -214,5 +184,38 @@ export default function ReportTracking({ session }) {
         </p>
       </section>
     </section>
+  );
+}
+
+function StageList({ report }) {
+  const currentRank = rank[report.status] || 1;
+  return (
+    <div className="stage-list">
+      {stages.map((stage, index) => {
+        const done = currentRank >= rank[stage.status];
+        const update = report.updates?.find(
+          (item) =>
+            item.new_status === stage.status ||
+            (stage.status === "in_review" && item.new_status === "assigned"),
+        );
+        return (
+          <article
+            key={stage.status}
+            className={done ? "stage-card stage-done" : "stage-card"}
+          >
+            <b>{String(index + 1).padStart(2, "0")}</b>
+            <div>
+              <strong>{stage.title}</strong>
+              <small>
+                {update
+                  ? new Date(update.created_at).toLocaleString("es-CO")
+                  : "Pendiente"}
+              </small>
+              <span>{update?.note || stage.note}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
