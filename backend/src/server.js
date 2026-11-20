@@ -54,6 +54,68 @@ app.get("/health", (_req, res) =>
   res.json({ ok: true, service: "griu-backend" }),
 );
 
+app.get("/api/public/reports/:code", async (req, res) => {
+  const reportCode = String(req.params.code || "")
+    .trim()
+    .toUpperCase();
+  if (!/^GRIU-[0-9]{4}-[A-Z0-9]+$/.test(reportCode)) {
+    return res.status(400).json({ error: "Código de seguimiento inválido" });
+  }
+
+  const { data: report, error } = await supabaseAdmin
+    .from("reports")
+    .select(
+      "id,report_code,title,description,barrio,commune,address,status,created_at,updated_at,incident_categories(name)",
+    )
+    .eq("report_code", reportCode)
+    .maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!report)
+    return res
+      .status(404)
+      .json({ error: "No encontramos un reporte con ese código" });
+
+  const [
+    { data: updates, error: updatesError },
+    { data: attachments, error: attachmentsError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("report_updates")
+      .select("id,new_status,note,created_at")
+      .eq("report_id", report.id)
+      .order("created_at"),
+    supabaseAdmin
+      .from("report_attachments")
+      .select("id,file_name,storage_path,content_type,created_at")
+      .eq("report_id", report.id)
+      .order("created_at"),
+  ]);
+  if (updatesError)
+    return res.status(500).json({ error: updatesError.message });
+  if (attachmentsError)
+    return res.status(500).json({ error: attachmentsError.message });
+
+  const publicAttachments = await Promise.all(
+    (attachments || []).map(async (attachment) => {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("report-photos")
+        .createSignedUrl(attachment.storage_path, 3600);
+      return {
+        id: attachment.id,
+        file_name: attachment.file_name,
+        content_type: attachment.content_type,
+        created_at: attachment.created_at,
+        signed_url: signed?.signedUrl || null,
+      };
+    }),
+  );
+  res.json({
+    ...report,
+    updates: updates || [],
+    attachments: publicAttachments,
+  });
+});
+
 app.get("/api/me", requireAuth, async (req, res) => {
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
@@ -108,11 +170,9 @@ app.post("/api/reports", requireAuth, async (req, res) => {
     priority,
   } = req.body;
   if (!category_id || !title || !description || !barrio) {
-    return res
-      .status(400)
-      .json({
-        error: "Categoría, título, descripción y barrio son obligatorios",
-      });
+    return res.status(400).json({
+      error: "Categoría, título, descripción y barrio son obligatorios",
+    });
   }
 
   const { data, error } = await supabaseAdmin

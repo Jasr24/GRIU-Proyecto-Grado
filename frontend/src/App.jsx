@@ -12,6 +12,7 @@ import Auth from "./components/Auth";
 import Citizen from "./components/Citizen";
 import Admin from "./components/Admin";
 import Landing from "./components/Landing";
+import PublicTracking from "./components/PublicTracking";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -75,6 +76,9 @@ function AppContent() {
             <Landing
               onLogin={() => navigate("/login")}
               onRegister={() => navigate("/registro")}
+              onTrack={(code) =>
+                navigate(`/seguimiento/${encodeURIComponent(code)}`)
+              }
             />
           }
         />
@@ -86,6 +90,7 @@ function AppContent() {
           path="/registro"
           element={<Auth initialMode="register" onAuth={handleAuth} />}
         />
+        <Route path="/seguimiento/:code" element={<PublicTracking />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );

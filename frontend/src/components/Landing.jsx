@@ -1,6 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 
-export default function Landing({ onLogin, onRegister }) {
+export default function Landing({ onLogin, onRegister, onTrack }) {
+  const [trackingCode, setTrackingCode] = useState("");
+  const [trackingMessage, setTrackingMessage] = useState("");
+  const submitTracking = (event) => {
+    event.preventDefault();
+    const code = trackingCode.trim();
+    if (!code) return setTrackingMessage("Escribe un código de seguimiento.");
+    setTrackingMessage("");
+    onTrack(code);
+  };
   return (
     <main className="landing-page">
       <header className="landing-nav">
@@ -132,13 +141,25 @@ export default function Landing({ onLogin, onRegister }) {
           <h2>¿Ya tienes un reporte?</h2>
           <p>Consulta el avance con tu código de seguimiento.</p>
         </div>
-        <div className="tracking-form">
+        <form className="tracking-form" onSubmit={submitTracking}>
           <label htmlFor="tracking-code">Código de seguimiento</label>
           <div className="tracking-controls">
-            <input id="tracking-code" placeholder="GRIU-2026-0148" />
-            <button className="nav-primary">Consultar reporte</button>
+            <input
+              id="tracking-code"
+              value={trackingCode}
+              onChange={(event) =>
+                setTrackingCode(event.target.value.toUpperCase())
+              }
+              placeholder="GRIU-2026-0148"
+            />
+            <button className="nav-primary" type="submit">
+              Consultar reporte
+            </button>
           </div>
-        </div>
+          {trackingMessage && (
+            <small className="tracking-message">{trackingMessage}</small>
+          )}
+        </form>
       </section>
 
       <section className="landing-notes">
