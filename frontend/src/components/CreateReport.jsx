@@ -258,7 +258,7 @@ export default function CreateReport({ session }) {
           <ul>
             <li>Sé específico: ¿qué ocurre y desde cuándo?</li>
             <li>Confirma el barrio y la dirección.</li>
-            <li>La fotografía será opcional cuando se implemente HU-04.</li>
+            <li>Evita fotografiar rostros, placas o documentos.</li>
           </ul>
           <div className="emergency-note">
             <strong>¿Hay peligro inmediato?</strong>
