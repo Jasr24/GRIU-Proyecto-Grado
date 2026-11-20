@@ -80,7 +80,7 @@ export default function CreateReport({ session }) {
           });
         if (attachmentError) throw attachmentError;
       }
-      navigate(`/ciudadano/seguimiento/${report.id}`);
+      navigate(`/ciudadano/crear-reporte/recibido/${report.id}`);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -194,7 +194,7 @@ export default function CreateReport({ session }) {
               <span>
                 {form.address || "Dirección o referencia por confirmar"}
               </span>
-              <small>Neiva, Huila</small>
+              <small>Neiva, Huila · Ubicación pendiente de confirmar.</small>
             </div>
           </section>
           <section className="report-section photo-placeholder">

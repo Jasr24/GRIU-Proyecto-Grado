@@ -12,6 +12,7 @@ import CitizenHome from "./CitizenHome";
 import CreateReport from "./CreateReport";
 import MyReports from "./MyReports";
 import ReportTracking from "./ReportTracking";
+import ReportCreated from "./ReportCreated";
 import { api } from "../services/api";
 
 export default function Citizen({ session, onLogout }) {
@@ -33,6 +34,10 @@ export default function Citizen({ session, onLogout }) {
         <Route
           path="crear-reporte"
           element={<CreateReport session={session} />}
+        />
+        <Route
+          path="crear-reporte/recibido/:id"
+          element={<ReportCreated session={session} />}
         />
         <Route path="mis-reportes" element={<MyReports session={session} />} />
         <Route
