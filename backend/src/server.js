@@ -54,6 +54,30 @@ app.get("/health", (_req, res) =>
   res.json({ ok: true, service: "griu-backend" }),
 );
 
+app.get("/api/public/stats", async (_req, res) => {
+  const { data: reports, error } = await supabaseAdmin
+    .from("reports")
+    .select(
+      "id,report_code,title,barrio,commune,status,created_at,updated_at,incident_categories(name)",
+    )
+    .order("updated_at", { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+
+  const rows = reports || [];
+  const resolved = rows.filter((report) => report.status === "resolved").length;
+  const featured = rows.find((report) => report.status === "resolved") || null;
+  res.json({
+    total: rows.length,
+    resolved,
+    resolvedPercentage: rows.length
+      ? Math.round((resolved / rows.length) * 100)
+      : 0,
+    communes: new Set(rows.map((report) => report.commune).filter(Boolean))
+      .size,
+    featured,
+  });
+});
+
 app.get("/api/public/reports/:code", async (req, res) => {
   const reportCode = String(req.params.code || "")
     .trim()

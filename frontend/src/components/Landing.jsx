@@ -1,8 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { publicApi } from "../services/api";
 
 export default function Landing({ onLogin, onRegister, onTrack }) {
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingMessage, setTrackingMessage] = useState("");
+  const [publicStats, setPublicStats] = useState(null);
+  useEffect(() => {
+    publicApi("/api/public/stats")
+      .then(setPublicStats)
+      .catch(() =>
+        setPublicStats({
+          total: 0,
+          resolvedPercentage: 0,
+          communes: 0,
+          featured: null,
+        }),
+      );
+  }, []);
   const submitTracking = (event) => {
     event.preventDefault();
     const code = trackingCode.trim();
@@ -57,17 +71,35 @@ export default function Landing({ onLogin, onRegister, onTrack }) {
         <div className="hero-card">
           <p className="card-eyebrow">DE TU REPORTE A LA SOLUCIÓN</p>
           <div className="sample-report">
-            <div className="sample-meta">
-              <strong>GRIU-2026-0132</strong>
-              <span>Resuelto</span>
-            </div>
-            <h2>La luz volvió a Las Granjas.</h2>
-            <p>Alumbrado público · Comuna 2</p>
-            <ul>
-              <li>Reporte recibido</li>
-              <li>Asignado al equipo responsable</li>
-              <li>Solución confirmada por la entidad</li>
-            </ul>
+            {publicStats?.featured ? (
+              <>
+                <div className="sample-meta">
+                  <strong>{publicStats.featured.report_code}</strong>
+                  <span>Resuelto</span>
+                </div>
+                <h2>{publicStats.featured.title}</h2>
+                <p>
+                  {publicStats.featured.incident_categories?.name ||
+                    "Incidente urbano"}
+                  {publicStats.featured.commune
+                    ? ` · Comuna ${publicStats.featured.commune}`
+                    : ""}
+                </p>
+                <ul>
+                  <li>Reporte recibido</li>
+                  <li>Asignado al equipo responsable</li>
+                  <li>Solución confirmada por la entidad</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <h2>Aún no hay reportes resueltos.</h2>
+                <p>
+                  Tu reporte puede ser el primero en mostrar una solución para
+                  la comunidad.
+                </p>
+              </>
+            )}
           </div>
           <small>Cada reporte cuenta. Cada respuesta también.</small>
         </div>
@@ -75,15 +107,19 @@ export default function Landing({ onLogin, onRegister, onTrack }) {
 
       <section className="landing-stats">
         <div>
-          <strong>1.284</strong>
+          <strong>
+            {publicStats ? publicStats.total.toLocaleString("es-CO") : "—"}
+          </strong>
           <span>reportes recibidos</span>
         </div>
         <div>
-          <strong>73 %</strong>
+          <strong>
+            {publicStats ? `${publicStats.resolvedPercentage} %` : "—"}
+          </strong>
           <span>casos resueltos</span>
         </div>
         <div>
-          <strong>10</strong>
+          <strong>{publicStats ? publicStats.communes : "—"}</strong>
           <span>comunas conectadas</span>
         </div>
         <div>
