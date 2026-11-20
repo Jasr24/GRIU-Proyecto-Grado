@@ -3,12 +3,42 @@ import { Link, useParams } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const labels = {
-  submitted: "Recibido",
+  submitted: "Reporte recibido",
   in_review: "En revisión",
   assigned: "Asignado",
   in_progress: "En atención",
   resolved: "Resuelto",
   rejected: "Rechazado",
+};
+const stages = [
+  {
+    status: "submitted",
+    title: "Reporte recibido",
+    note: "Recibimos tu reporte y generamos el código de seguimiento.",
+  },
+  {
+    status: "in_review",
+    title: "En revisión",
+    note: "Se validarán los datos y el área responsable.",
+  },
+  {
+    status: "in_progress",
+    title: "En atención",
+    note: "El equipo asignado gestionará el incidente.",
+  },
+  {
+    status: "resolved",
+    title: "Resuelto",
+    note: "Se publicará el resultado y la evidencia de atención.",
+  },
+];
+const rank = {
+  submitted: 1,
+  in_review: 2,
+  assigned: 2,
+  in_progress: 3,
+  resolved: 4,
+  rejected: 4,
 };
 
 export default function PublicTracking() {
@@ -26,99 +56,167 @@ export default function PublicTracking() {
       .then(setReport)
       .catch((error) => setMessage(error.message));
   }, [code]);
-  return (
-    <main className="public-tracking-page">
-      <header className="public-tracking-header">
-        <Link to="/" className="public-brand">
-          GRIU
-        </Link>
-        <span>NEIVA, HUILA&nbsp; / &nbsp;PORTAL CIUDADANO</span>
-        <Link to="/login" className="outline-button">
-          Iniciar sesión
-        </Link>
-      </header>
-      <section className="public-tracking-content">
-        {message ? (
+  if (message)
+    return (
+      <main className="public-tracking-page">
+        <PublicHeader />
+        <section className="public-tracking-content">
           <div className="public-error">
             <p>{message}</p>
             <Link className="nav-primary" to="/">
               ← Volver al inicio
             </Link>
           </div>
-        ) : !report ? (
-          <div className="loading">Consultando reporte...</div>
-        ) : (
-          <>
-            <div className="public-tracking-heading">
+        </section>
+      </main>
+    );
+  if (!report)
+    return (
+      <main className="public-tracking-page">
+        <PublicHeader />
+        <div className="loading">Consultando reporte...</div>
+      </main>
+    );
+  const currentRank = rank[report.status] || 1;
+  const latest = report.updates?.[report.updates.length - 1];
+  return (
+    <main className="public-tracking-page">
+      <PublicHeader />
+      <section className="public-tracking-content">
+        <div className="public-tracking-heading">
+          <div>
+            <p className="eyebrow">SEGUIMIENTO DEL REPORTE</p>
+            <h1>Seguimiento del reporte</h1>
+            <p>Consulta la trazabilidad y las novedades de tu solicitud.</p>
+          </div>
+          <Link className="link-button" to="/">
+            ← Volver al inicio
+          </Link>
+        </div>
+        <div className="tracking-columns">
+          <div className="tracking-main-card">
+            <div className="tracking-report-title">
               <div>
-                <p className="eyebrow">SEGUIMIENTO DEL REPORTE</p>
-                <h1>{report.report_code}</h1>
-                <p>Consulta el estado y las actualizaciones de tu solicitud.</p>
-              </div>
-              <Link className="link-button" to="/">
-                ← Volver al inicio
-              </Link>
-            </div>
-            <div className="tracking-detail public-detail">
-              <h2>{report.title}</h2>
-              <p>{report.description}</p>
-              <div className="detail-grid">
-                <span>
-                  <b>Categoría</b>
-                  {report.incident_categories?.name || "—"}
+                <strong>{report.report_code}</strong>
+                <span className={`status-pill status-${report.status}`}>
+                  {labels[report.status] || report.status}
                 </span>
-                <span>
-                  <b>Ubicación</b>
+              </div>
+              <h2>{report.title}</h2>
+              <p>
+                {report.barrio}
+                {report.commune ? ` · Comuna ${report.commune}` : ""}
+                {report.incident_categories?.name
+                  ? ` · ${report.incident_categories.name}`
+                  : ""}
+              </p>
+            </div>
+            <div className="stage-list">
+              {stages.map((stage, index) => {
+                const done = currentRank >= rank[stage.status];
+                const update = report.updates?.find(
+                  (item) => item.new_status === stage.status,
+                );
+                return (
+                  <article
+                    key={stage.status}
+                    className={done ? "stage-card stage-done" : "stage-card"}
+                  >
+                    <b>{String(index + 1).padStart(2, "0")}</b>
+                    <div>
+                      <strong>{stage.title}</strong>
+                      <small>
+                        {update
+                          ? new Date(update.created_at).toLocaleString("es-CO")
+                          : "Pendiente"}
+                      </small>
+                      <span>{update?.note || stage.note}</span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+          <aside className="tracking-side-card">
+            <h2>Datos del reporte</h2>
+            <dl>
+              <div>
+                <dt>Dirección</dt>
+                <dd>{report.address || "No indicada"}</dd>
+              </div>
+              <div>
+                <dt>Sector</dt>
+                <dd>
                   {report.barrio}
                   {report.commune ? ` · Comuna ${report.commune}` : ""}
-                  {report.address ? ` · ${report.address}` : ""}
-                </span>
-                <span>
-                  <b>Estado actual</b>
-                  <em className={`status-pill status-${report.status}`}>
-                    {labels[report.status] || report.status}
-                  </em>
-                </span>
+                </dd>
               </div>
-            </div>
-            {report.attachments?.length > 0 && (
-              <>
-                <h2 className="timeline-title">Evidencia fotográfica</h2>
-                <div className="attachment-grid">
-                  {report.attachments.map((attachment) => (
-                    <a
-                      key={attachment.id}
-                      href={attachment.signed_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <img
-                        src={attachment.signed_url}
-                        alt={attachment.file_name}
-                      />
-                      <span>{attachment.file_name}</span>
-                    </a>
-                  ))}
-                </div>
-              </>
-            )}
-            <h2 className="timeline-title">Historial de cambios</h2>
-            <div className="timeline">
-              {(report.updates || []).map((update) => (
-                <article key={update.id}>
-                  <strong>
-                    {labels[update.new_status] || update.new_status}
-                  </strong>
-                  <span>{update.note || "Sin observaciones"}</span>
-                  <small>
-                    {new Date(update.created_at).toLocaleString("es-CO")}
-                  </small>
-                </article>
+              <div>
+                <dt>Evidencia</dt>
+                <dd>
+                  {report.attachments?.length
+                    ? `${report.attachments.length} fotografía(s) adjunta(s)`
+                    : "Sin fotografías"}
+                </dd>
+              </div>
+              <div>
+                <dt>Área responsable</dt>
+                <dd>Información pendiente de asignación</dd>
+              </div>
+            </dl>
+            <p>
+              Las novedades aparecerán aquí cuando el reporte sea actualizado.
+            </p>
+            <Link className="cancel-button" to="/">
+              Volver al inicio
+            </Link>
+          </aside>
+        </div>
+        {report.attachments?.length > 0 && (
+          <section className="tracking-evidence">
+            <h2>Evidencia fotográfica</h2>
+            <div className="attachment-grid">
+              {report.attachments.map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={attachment.signed_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img src={attachment.signed_url} alt={attachment.file_name} />
+                  <span>{attachment.file_name}</span>
+                </a>
               ))}
             </div>
-          </>
+          </section>
         )}
+        <section className="latest-update">
+          <h2>Última novedad</h2>
+          <small>
+            {latest
+              ? new Date(latest.created_at).toLocaleString("es-CO")
+              : "Sin novedades"}
+          </small>
+          <p>
+            {latest?.note ||
+              "Tu reporte fue recibido correctamente. Aún no hay observaciones del equipo de atención."}
+          </p>
+        </section>
       </section>
     </main>
+  );
+}
+
+function PublicHeader() {
+  return (
+    <header className="public-tracking-header">
+      <Link to="/" className="public-brand">
+        GRIU
+      </Link>
+      <span>NEIVA, HUILA&nbsp; / &nbsp;PORTAL CIUDADANO</span>
+      <Link to="/login" className="outline-button">
+        Iniciar sesión
+      </Link>
+    </header>
   );
 }
