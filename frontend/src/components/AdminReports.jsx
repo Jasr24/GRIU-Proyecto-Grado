@@ -20,21 +20,6 @@ const labels = {
   rejected: "Rechazado",
 };
 
-if (typeof document !== "undefined" && !window.__griuReportsNavigation) {
-  window.__griuReportsNavigation = true;
-  document.addEventListener("click", (event) => {
-    const item = event.target.closest(".admin-nav");
-    if (
-      item &&
-      item.textContent.trim() === "Reportes y filtros" &&
-      window.location.pathname.startsWith("/admin")
-    ) {
-      event.preventDefault();
-      window.location.href = "/admin/reportes";
-    }
-  });
-}
-
 function AdminReportsShell({ name, onLogout, children }) {
   return (
     <main className="admin-page">
@@ -49,7 +34,9 @@ function AdminReportsShell({ name, onLogout, children }) {
           <Link className="admin-nav" to="/admin">
             Panel general
           </Link>
-          <span className="admin-nav active">Reportes y filtros</span>
+          <span className="admin-nav active" aria-current="page">
+            Reportes y filtros
+          </span>
           <div className="admin-help">
             <strong>Una respuesta clara genera confianza.</strong>
             <span>

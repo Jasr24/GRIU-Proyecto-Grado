@@ -272,6 +272,7 @@ function AdminShell({ name, active, onLogout, children }) {
           </Link>
           <span
             className={`admin-nav${active === "Reportes y filtros" ? " active" : ""}`}
+            aria-current={active === "Reportes y filtros" ? "page" : undefined}
           >
             Reportes y filtros
           </span>

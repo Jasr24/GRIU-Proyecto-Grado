@@ -38,11 +38,12 @@ function AdminShell({ name, active, onLogout, children }) {
           >
             Panel general
           </Link>
-          <span
+          <Link
             className={`admin-nav${active === "Reportes y filtros" ? " active" : ""}`}
+            to="/admin/reportes"
           >
             Reportes y filtros
-          </span>
+          </Link>
           <div className="admin-help">
             <strong>Una respuesta clara genera confianza.</strong>
             <span>
